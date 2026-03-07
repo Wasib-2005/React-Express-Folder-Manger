@@ -1,17 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import ShowTheActivePath from "./ShowTheActivePath";
+import axios from "axios";
+import FileManagerManu from "./FileManagerManu";
 
 const FileManager = () => {
   const [query, setQuery] = useSearchParams();
+  const [fileFolderPathData, setfileFolderPathData] = useState({});
 
   const path = query.get("path");
 
-  console.log(query);
+  useEffect(() => {
+    axios
+      .get(
+        `${import.meta.env.VITE_API_URL}/api/paths${path ? `?path=${path}` : ""}`,
+      )
+      .then((e) => setfileFolderPathData(e.data));
+  }, [path]);
 
   return (
-    <div>
-        {path}
-      <ul onClick={() => setQuery({ path: "/" })}>sss</ul>
+    <div className="-2">
+      <ShowTheActivePath currentLocation={fileFolderPathData.location} />
+      <FileManagerManu fileFolderPathData={fileFolderPathData} />
+      <hr className="glass" />
     </div>
   );
 };

@@ -1,12 +1,8 @@
 import express from "express";
-import {
-  basicFolderExplorer,
-  defaultFolderExplorer,
-} from "../controllers/filepath.controller.js";
+import { folderExplorer } from "../controllers/filepath.controller.js";
 
 const router = express.Router();
 
-router.get("", defaultFolderExplorer);
-router.get("/path", basicFolderExplorer);
+router.get("/", folderExplorer);
 
 export default router;

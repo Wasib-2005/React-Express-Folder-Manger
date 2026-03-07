@@ -16,7 +16,7 @@ const NavBar = () => {
           .join(" ");
 
   return (
-    <div className="p-4 fixed glass w-screen flex items-center gap-3">
+    <nav className="p-4 fixed glass w-screen flex items-center gap-3">
       <Sidebar />
 
       <h1 className="font-bold text-2xl flex">
@@ -38,7 +38,7 @@ const NavBar = () => {
           ))}
         </AnimatePresence>
       </h1>
-    </div>
+    </nav>
   );
 };
 
