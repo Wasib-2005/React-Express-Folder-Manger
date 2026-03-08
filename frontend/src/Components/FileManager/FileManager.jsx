@@ -5,7 +5,7 @@ import axios from "axios";
 import FileManagerManu from "./FileManagerManu";
 
 const FileManager = () => {
-  const [query, setQuery] = useSearchParams();
+  const [query] = useSearchParams();
   const [fileFolderPathData, setfileFolderPathData] = useState({});
 
   const path = query.get("path");

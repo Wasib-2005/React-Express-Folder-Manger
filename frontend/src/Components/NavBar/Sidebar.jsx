@@ -57,7 +57,7 @@ const Sidebar = () => {
             {/* Overlay */}
             <motion.div
               onClick={() => setMenuIsOpen(false)}
-              className="fixed top-0 left-0 h-screen w-screen bg-black/30 backdrop-blur-sm"
+              className="fixed top-0 left-0 h-screen w-screen bg-white/75 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -72,7 +72,7 @@ const Sidebar = () => {
               exit="exit"
             >
               {navLinks.map((item, i) => (
-                <motion.li variants={itemVariants} key={item.name}>
+                <motion.li variants={itemVariants} key={item.name + i}>
                   <NavLink
                     to={item.to}
                     onClick={() => setMenuIsOpen(false)}

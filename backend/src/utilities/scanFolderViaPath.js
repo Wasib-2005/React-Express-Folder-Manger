@@ -30,17 +30,18 @@ function getType(itemName, isDirectory) {
   for (const [type, exts] of Object.entries(typeMap)) {
     if (exts.includes(ext)) return type;
   }
-  return "file"; // fallback for unknown file types
+  return "file";
 }
 
 export async function scanFolderViaPath(folderPath) {
   const items = await fs.readdir(folderPath, { withFileTypes: true });
   const location = await fs.realpath(folderPath);
 
-  const folderFile = await Promise.all(
+  let folderFile = await Promise.all(
     items.map(async (item) => {
       const fullPath = path.join(folderPath, item.name);
       const stats = await fs.stat(fullPath);
+      console.log(stats)
 
       return {
         name: item.name,
@@ -52,6 +53,14 @@ export async function scanFolderViaPath(folderPath) {
       };
     }),
   );
+
+  // 🔹 Sort: folders first, then files, then alphabetical
+  folderFile.sort((a, b) => {
+    if (a.type === "folder" && b.type !== "folder") return -1;
+    if (a.type !== "folder" && b.type === "folder") return 1;
+
+    return a.name.localeCompare(b.name); // optional alphabetical sort
+  });
 
   return { location, folderFile };
 }
