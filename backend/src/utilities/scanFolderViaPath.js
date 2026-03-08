@@ -3,7 +3,7 @@ import path from "path";
 
 // Define extension categories
 const typeMap = {
-  video: [".mp4", ".mkv", ".avi", ".mov", ".webm"],
+  video: [".mp4", ".mkv", ".avi", ".mov", ".webm","ts"],
   audio: [".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"],
   photo: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".svg"],
   document: [".pdf", ".doc", ".docx", ".txt", ".xls", ".xlsx", ".ppt", ".pptx"],
