@@ -79,11 +79,24 @@ const getExtension = (fileName) => {
   return "";
 };
 
-const FileIcons = ({ name, type }) => {
-  if (type === "folder") return <MdFolder size={28} className="text-yellow-500" />;
+const FileIcons = ({ fileFolderData }) => {
+  if (fileFolderData?.type === "folder")
+    return <MdFolder size={28} className="text-yellow-500" />;
+  console.log(fileFolderData);
+  if (fileFolderData?.type === "photo")
+    return (
+      <img
+        className="w-10"
+        src={`${import.meta.env.VITE_API_URL}/api/file${fileFolderData?.path}`}
+      />
+    );
 
-  const ext = getExtension(name);
-  return extensionIconMap[ext] || <MdInsertDriveFile size={28} className="text-gray-400" />;
+  const ext = getExtension(fileFolderData?.name);
+  return (
+    extensionIconMap[ext] || (
+      <MdInsertDriveFile size={28} className="text-gray-400" />
+    )
+  );
 };
 
 export default FileIcons;

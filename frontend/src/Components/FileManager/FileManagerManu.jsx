@@ -4,6 +4,7 @@ import { autoFormatSize } from "../../Utilities/formatSize";
 import FileIcons from "../../Utilities/FileIcons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import FileModal from "./FileModal";
 
 const FileManagerManu = ({ fileFolderPathData }) => {
   const navigate = useNavigate();
@@ -11,6 +12,10 @@ const FileManagerManu = ({ fileFolderPathData }) => {
 
   const [currentPath, setCurrentPath] = useState(location);
   const [displayFiles, setDisplayFiles] = useState(folderFile || []);
+
+  const [filePathAndTypeNameIcon, setFilePathAndTypeNameIcon] = useState({});
+
+  const [isModalOpen, setIsModalOpen] = useState(true);
 
   useEffect(() => {
     setDisplayFiles(folderFile || []);
@@ -32,6 +37,17 @@ const FileManagerManu = ({ fileFolderPathData }) => {
     }, 300); // match exit duration
   };
 
+  const handleFileClick = (file, type) => {
+    const newPath = `${currentPath}/${file.name}`;
+    setFilePathAndTypeNameIcon({ newPath, type, ...file});
+    setIsModalOpen(true);
+
+    // window.open(
+    //   `${import.meta.env.VITE_API_URL}/api/file/${encodeURIComponent(newPath)}`,
+    //   "_blank",
+    // );
+  };
+
   return (
     <div className="overflow-hidden">
       <AnimatePresence mode="wait">
@@ -48,15 +64,23 @@ const FileManagerManu = ({ fileFolderPathData }) => {
             <li
               key={`${e.name}-${i}`}
               className="grid px-2"
-              onClick={() => e.type === "folder" && handleFolderClick(e.name)}
+              onClick={() =>
+                e.type === "folder"
+                  ? handleFolderClick(e.name)
+                  : handleFileClick(e, e.type)
+              }
             >
               <span className="gap-2">
                 <span className="px-1 py-2 btn btn-ghost h-auto w-full text-left flex">
-                  <FileIcons name={e.name} type={e.type} />
+                  <FileIcons fileFolderData={e} />
                   <span className="w-full">
-                    <span className="font-bold text-xl text-wrap">{e.name}</span>
+                    <span className="font-bold text-xl text-wrap">
+                      {e.name}
+                    </span>
                     <span className="flex justify-between">
-                      <span className="font-normal">Size: {autoFormatSize(e.size)}</span>
+                      <span className="font-normal">
+                        Size: {autoFormatSize(e.size)}
+                      </span>
                       <span className="font-normal">
                         Created: {formatDate(e.created, "dd MMM yyyy")}
                       </span>
@@ -74,6 +98,11 @@ const FileManagerManu = ({ fileFolderPathData }) => {
             </li>
           ))}
         </motion.ul>
+        <FileModal
+          filePathAndTypeName={filePathAndTypeNameIcon}
+          isModalOpen={isModalOpen}
+          setIsModalOpen={setIsModalOpen}
+        />
       </AnimatePresence>
     </div>
   );

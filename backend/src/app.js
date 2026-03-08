@@ -18,14 +18,12 @@ app.use(
 
 app.use(express.json());
 
-app.use("/api/paths",filepathRoutes)
-
+app.use("/api/paths", filepathRoutes);
+app.use("/api/file", express.static("/"));
 
 // ✅ Frontend serving
 const frontendPath = path.join(__dirname, "../../Friend-Ecom-Web/dist");
 app.use(express.static(frontendPath));
 app.get("/health", (req, res) => res.json({ status: "ok" }));
-
-
 
 export default app;
