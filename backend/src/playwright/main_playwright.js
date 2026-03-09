@@ -1,5 +1,11 @@
-// utils/findUrls.js
-import { chromium } from "playwright";
+let chromium = null;
+
+if (process.platform !== "android") {
+  const playwright = require("playwright");
+  chromium = playwright.chromium;
+} else {
+  console.log("Playwright disabled on Android");
+}
 
 export const findUrls = async (url, selector) => {
   const browser = await chromium.launch({ headless: true });
