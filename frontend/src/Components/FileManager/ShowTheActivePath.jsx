@@ -50,7 +50,7 @@ const ShowTheActivePath = ({ currentLocation }) => {
   };
 
   return (
-    <div className="flex gap-2 items-center justify-between w-full min-h-4 mt-2 z-0 p-2">
+    <div className="flex gap-2 items-center justify-between w-full min-h-4 z-0 pt-0 p-2">
       <div className="w-full">
         <AnimatePresence mode="wait">
           {isEdit ? (

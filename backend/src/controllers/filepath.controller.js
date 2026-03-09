@@ -2,7 +2,7 @@ import { scanFolderViaPath } from "../utilities/scanFolderViaPath.js";
 
 export const folderExplorer = async (req, res) => {
   const folderPath =
-    req.query.path || process.env.DEFAULT_PATH || "./src/Storages";
+    req.query.path || process.env.DEFAULT_PATH || "/data/data/com.termux/files/home";
 
   try {
     const paths = await scanFolderViaPath(folderPath);

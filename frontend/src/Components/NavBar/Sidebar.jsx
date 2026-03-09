@@ -4,7 +4,7 @@ import { RiMenu2Line } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
 const navLinks = [
   { name: "File Manager", to: "/" },
-  { name: "Anime", to: "/anime" },
+  { name: "Manga Downloader", to: "/manga-downloader" },
   { name: "Video Player", to: "/video-player" },
 ];
 const Sidebar = () => {
