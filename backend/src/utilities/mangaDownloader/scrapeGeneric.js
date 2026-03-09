@@ -1,12 +1,16 @@
-import { chromium } from "playwright";
-
 export const scrapeGeneric = async (chapterUrl) => {
+  if (process.platform === "android") {
+    console.log("Playwright disabled on Android");
+    return [];
+  }
+
+  const { chromium } = await import("playwright");
+
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
   const images = new Set();
 
-  // capture image responses
   page.on("response", async (response) => {
     try {
       const url = response.url();
@@ -22,7 +26,6 @@ export const scrapeGeneric = async (chapterUrl) => {
 
   await page.goto(chapterUrl, { waitUntil: "networkidle" });
 
-  // scroll to trigger lazy loading (many manga sites need this)
   await page.evaluate(async () => {
     await new Promise((resolve) => {
       let totalHeight = 0;
