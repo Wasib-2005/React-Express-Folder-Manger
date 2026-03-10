@@ -16,7 +16,7 @@ const NavBar = () => {
           .join(" ");
 
   return (
-    <nav className="p-4 fixed glass w-screen flex items-center gap-3">
+    <nav className="p-4 fixed glass w-screen flex items-center gap-3 z-50">
       <Sidebar />
 
       <h1 className="font-bold text-2xl flex">

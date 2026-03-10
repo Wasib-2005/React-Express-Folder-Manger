@@ -21,11 +21,13 @@ export const foundImgs = async (req, res) => {
     const tempDir = process.env.MANGA_MANHUA_DOWNLOAD_PATH
       ? path.resolve(process.env.MANGA_MANHUA_DOWNLOAD_PATH, "temp")
       : defaultDir;
+    const basePath = tempDir;
 
     // Step 1: Clear the download folder BEFORE doing anything else
     broadcast({
       type: "message",
       text: `Clearing download folder...`,
+      running: true,
       progress: progressCounter.counter,
     });
     await fs.rm(tempDir, { recursive: true, force: true });
@@ -35,6 +37,7 @@ export const foundImgs = async (req, res) => {
     broadcast({
       type: "message",
       text: `Download folder ready: ${tempDir}`,
+      running: true,
       progress: progressCounter.counter,
     });
 
@@ -64,9 +67,17 @@ export const foundImgs = async (req, res) => {
 
     progressCounter.counter++;
     broadcast({
-      type: "message",
-      text: `Found ${images.length} images (URLs only) progress: ${progressCounter.counter}`,
+      type: "finish",
+      text: `Found ${images.length} images (URLs only)`,
+      running: false,
       progress: progressCounter.counter,
+    });
+    res.json({
+      success: true,
+      imagesData: {
+        ...images,
+        baseUrl: basePath,
+      },
     });
   } catch (err) {
     console.error("Error in foundImgs:", err);

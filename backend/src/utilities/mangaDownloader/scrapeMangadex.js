@@ -12,7 +12,9 @@ export const scrapeMangadex = async (chapterUrl) => {
     broadcast({
       type: "message",
       text: "Starting MangaDex scraper...",
+      running: true,
       progress: progressCounter.counter,
+      
     });
 
     // Extract chapterId from URL
@@ -38,7 +40,9 @@ export const scrapeMangadex = async (chapterUrl) => {
     broadcast({
       type: "message",
       text: `Title found: ${name} (Chapter ${ep})`,
+      running: true,
       progress: progressCounter.counter,
+      
     });
 
     // ===== GET IMAGE LIST =====
@@ -56,11 +60,13 @@ export const scrapeMangadex = async (chapterUrl) => {
     const tempDir = process.env.MANGA_MANHUA_DOWNLOAD_PATH
       ? path.resolve(process.env.MANGA_MANHUA_DOWNLOAD_PATH, "temp")
       : defaultDir;
- 
+
     broadcast({
       type: "message",
       text: "Cleaning temp folder...",
+      running: true,
       progress: progressCounter.counter,
+      
     });
 
     await fs.rm(tempDir, { recursive: true, force: true });
@@ -69,7 +75,9 @@ export const scrapeMangadex = async (chapterUrl) => {
     broadcast({
       type: "message",
       text: `Folder ready: ${tempDir}`,
+      running: true,
       progress: progressCounter.counter,
+      
     });
 
     // ===== DOWNLOAD IMAGES =====
@@ -95,7 +103,9 @@ export const scrapeMangadex = async (chapterUrl) => {
           broadcast({
             type: "message",
             text: `Saved ${filename} (${i + 1}/${images.length})`,
-            progress: Math.round(((i + 1) / images.length) * 100),
+            running: true,
+            progress: progressCounter.counter,
+            
           });
 
           saved = true;
@@ -129,15 +139,19 @@ export const scrapeMangadex = async (chapterUrl) => {
     broadcast({
       type: "message",
       text: `Scraping finished → ${fileList.length} images saved`,
-      progress: 100,
+      running: true,
+      progress: progressCounter.counter,
+      
     });
 
     return info;
   } catch (err) {
     broadcast({
       type: "message",
+      running: true,
       text: `Error: ${err.message}`,
       progress: progressCounter.counter,
+      
     });
     throw err;
   }

@@ -12,6 +12,7 @@ export const scrapeNamicomi = async (chapterUrl) => {
   broadcast({
     type: "message",
     text: "Starting Namicomi scraper...",
+    running: true,
     progress: progressCounter.counter,
   });
 
@@ -56,12 +57,14 @@ export const scrapeNamicomi = async (chapterUrl) => {
   broadcast({
     type: "message",
     text: `Title found: ${name} (Ep ${ep})`,
+    running: true,
     progress: progressCounter.counter,
   });
 
   broadcast({
     type: "message",
     text: "Scrolling chapter...",
+    running: true,
     progress: progressCounter.counter,
   });
 
@@ -78,6 +81,7 @@ export const scrapeNamicomi = async (chapterUrl) => {
 
   broadcast({
     type: "message",
+    running: true,
     text: `Found ${imageList.length} images`,
     progress: progressCounter.counter,
   });
@@ -102,7 +106,8 @@ export const scrapeNamicomi = async (chapterUrl) => {
     broadcast({
       type: "message",
       text: `Saved ${filename} (${i + 1}/${imageList.length})`,
-      progress: Math.round(((i + 1) / imageList.length) * 100),
+      running: true,
+      progress: progressCounter.counter,
     });
   }
 
@@ -119,8 +124,9 @@ export const scrapeNamicomi = async (chapterUrl) => {
 
   broadcast({
     type: "message",
+    running: true,
     text: `Scraping finished → ${fileList.length} images saved`,
-    progress: 100,
+    progress: progressCounter.counter,
   });
 
   return info;

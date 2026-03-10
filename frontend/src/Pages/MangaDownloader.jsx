@@ -1,93 +1,126 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import ViewDownloadedManga from "../Components/Manga/Downloader/ViewDownloadedManga";
 
 const MangaDownloader = () => {
-  const [url, setUrl] = useState("https://mangadex.org/chapter/705f2677-de63-49d3-9169-8a54d412ef81/1");
-  const [images, setImages] = useState([]);
-
+  const [url, setUrl] = useState("");
+  const [imagesData, setImagesData] = useState({});
   const [messages, setMessages] = useState([]);
+  const [isPreview, setIsPreview] = useState(false);
+  const [startLooking, setStartLooking] = useState(false);
+
+  const messageEndRef = useRef(null);
 
   useEffect(() => {
-    let apiUrl = import.meta.env.VITE_API_URL; // http://192.168.0.114:3000
-    apiUrl = apiUrl.replace(/^https?:\/\//, ""); // 192.168.0.114:3000
+    let apiUrl = import.meta.env.VITE_API_URL;
+    apiUrl = apiUrl.replace(/^https?:\/\//, "");
+
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${protocol}://${apiUrl}`; // ws://192.168.0.114:3000
+    const wsUrl = `${protocol}://${apiUrl}`;
+
     console.log("Connecting to WebSocket:", wsUrl);
 
     const socket = new WebSocket(wsUrl);
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-
-      if (data.type === "message") {
+      if (data.type === "message" || data.type === "finish") {
         setMessages((prev) => [...prev, data.text]);
       }
-
-      if (data.type === "finished") {
-        setMessages((prev) => [...prev, data.text]);
+      if (data.type === "finish") {
+        setStartLooking(false);
       }
     };
-
     return () => socket.close();
   }, []);
 
-  const handleSubmit = async () => {
-     setMessages([]);
-    const res = await fetch("http://localhost:3000/api/findImg", {
+  // auto scroll like console
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStartLooking(true);
+    setMessages([]);
+    setImagesData({});
+
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/findImg`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
     });
 
     const data = await res.json();
-
-    if (data.success) {
-      setImages(data.images);
-    } else {
-      setImages([]);
-    }
+    console.log("data: ", data);
+    setImagesData(data.imagesData);
   };
 
   return (
-    <div className="px-2 grid gap-4">
-      <div className="mt-4 p-2 bg-gray-100 rounded max-h-96 overflow-y-auto">
-        {messages.map((msg, i) => (
-          <div key={i} className="text-sm font-mono">
-            {msg}
+    <div className="px-2 grid gap-4 mt-1 md:w-[90%] min-h-[calc(100vh-300px)] md:min-h-[calc(100vh-75px)] m-auto justify-center items-center">
+      <form className="grid gap-4">
+        <h1 className="font-semibold text-xl">Manga URL:</h1>
+
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className="p-2 rounded-lg border border-base-300 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+
+        {imagesData?.pages?.length > 0 && (
+          <ViewDownloadedManga
+            isPreview={isPreview}
+            imagesData={imagesData}
+            setImagesData={setImagesData}
+          />
+        )}
+
+        {/* Responsive Buttons */}
+        <div className="flex flex-wrap justify-center gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 justify-center w-full sm:w-auto">
+            <button
+              disabled={startLooking}
+              type="submit"
+              onClick={handleSubmit}
+              className={`btn btn-success w-40 sm:w-[140px] ${startLooking ? "opacity-70 cursor-not-allowed" : ""}`}
+            >
+              {startLooking ? "Looking..." : "Start Looking"}
+            </button>
+
+            <button
+              disabled={startLooking}
+              type="button"
+              onClick={() => setIsPreview(!isPreview)}
+              className="btn btn-primary w-40 sm:w-[140px]"
+            >
+              {startLooking
+                ? "Looking..."
+                : isPreview
+                  ? "Hide Preview"
+                  : "Preview"}
+            </button>
           </div>
-        ))}
-      </div>
 
-      <h1 className="font-[450] text-xl">Manga Url:</h1>
+          <div className="w-full flex justify-center mt-2 sm:mt-0">
+            <button
+              type="button"
+              className="btn btn-outline btn-info w-40 sm:w-[140px]"
+              // optionally disable Save during scraping
+              disabled={startLooking}
+            >
+              {startLooking ? "Looking..." : " Save The Manga"}
+            </button>
+          </div>
+        </div>
+      </form>
 
-      <input
-        type="text"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        className="p-2 rounded-lg border border-base-300 w-full"
-      />
-
-      <button
-        onClick={handleSubmit}
-        className="btn btn-outline btn-success w-[80%]"
-      >
-        Find The Manga
-      </button>
-
-      {/* Render images */}
-      {images?.length > 0 && (
-        <div className="mt-4 grid gap-4">
-          {images.map((img, index) => (
-            <div key={img} className="flex flex-col items-center">
-              <span className="mb-2 font-medium">Page {index + 1}</span>
-              <img
-                src={img}
-                alt={`Page ${index + 1}`}
-                className="max-w-full rounded-lg shadow-md"
-              />
-            </div>
+      {/* Console Messages */}
+      {messages.length > 0 && (
+        <div className="p-2 glass font-semibold text-green-600 font-mono rounded max-h-64 overflow-y-auto z-0 mt-4 mb-10 ">
+          {messages.map((msg, i) => (
+            <div key={i}>{msg}</div>
           ))}
+          <div ref={messageEndRef} />
         </div>
       )}
     </div>
