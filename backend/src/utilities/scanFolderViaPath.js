@@ -41,7 +41,6 @@ export async function scanFolderViaPath(folderPath) {
     items.map(async (item) => {
       const fullPath = path.join(folderPath, item.name);
       const stats = await fs.stat(fullPath);
-      console.log(stats)
 
       return {
         name: item.name,

@@ -1,31 +1,82 @@
+import fs from "fs/promises";
+import path from "path";
+
 import { detectSite } from "../utilities/mangaDownloader/detectSite.js";
-import { scrapeGeneric } from "../utilities/mangaDownloader/scrapeGeneric.js";
 import { scrapeMangadex } from "../utilities/mangaDownloader/scrapeMangadex.js";
+import { scrapeNamicomi } from "../utilities/mangaDownloader/scrapeNamicomi.js";
+
+import { scrapeSequentialImages } from "../utilities/mangaDownloader/scrapeSequentialImages.js";
+import { broadcast } from "../WebSockets/webSocket.js";
+import { progressCounter } from "../utilities/progressCounter.js";
 
 export const foundImgs = async (req, res) => {
   try {
+    // Reset progress counter
+    progressCounter.counter = 0;
+
     const { url } = req.body;
 
-    const site = detectSite(url);
+    // Determine the download folder
+    const defaultDir = path.resolve("./src/Storages/manga/temp");
+    const tempDir = process.env.MANGA_MANHUA_DOWNLOAD_PATH
+      ? path.resolve(process.env.MANGA_MANHUA_DOWNLOAD_PATH, "temp")
+      : defaultDir;
 
+    // Step 1: Clear the download folder BEFORE doing anything else
+    broadcast({
+      type: "message",
+      text: `Clearing download folder...`,
+      progress: progressCounter.counter,
+    });
+    await fs.rm(tempDir, { recursive: true, force: true });
+    await fs.mkdir(tempDir, { recursive: true });
+
+    progressCounter.counter++;
+    broadcast({
+      type: "message",
+      text: `Download folder ready: ${tempDir}`,
+      progress: progressCounter.counter,
+    });
+
+    // Step 2: Broadcast starting message
+    broadcast({
+      type: "message",
+      text: "Starting manga scan...",
+      progress: progressCounter.counter,
+    });
+
+    // Step 3: Detect the site
+    const site = detectSite(url);
     let images = [];
 
-    if (site === "mangadex") {
-      images = await scrapeMangadex(url);
-    } else {
-      images = await scrapeGeneric(url);
-    }
+    progressCounter.counter++;
+    broadcast({
+      type: "message",
+      text: `Choosing the scraper...`,
+      progress: progressCounter.counter,
+    });
 
-    res.json({
-      success: true,
-      count: images.length,
-      images,
+    // Step 4: Scrape images
+    if (site === "mangadex") images = await scrapeMangadex(url);
+    else if (site === "namicomi") images = await scrapeNamicomi(url);
+  
+    else images = await scrapeSequentialImages(url);
+
+    progressCounter.counter++;
+    broadcast({
+      type: "message",
+      text: `Found ${images.length} images (URLs only) progress: ${progressCounter.counter}`,
+      progress: progressCounter.counter,
     });
   } catch (err) {
-    console.error(err);
-
-    res.status(500).json({
-      success: false,
+    console.error("Error in foundImgs:", err);
+    progressCounter.counter++;
+    broadcast({
+      type: "message",
+      text: `Error: ${err.message}`,
+      progress: progressCounter.counter,
     });
+
+    res.status(500).json({ success: false, message: err.message });
   }
 };
