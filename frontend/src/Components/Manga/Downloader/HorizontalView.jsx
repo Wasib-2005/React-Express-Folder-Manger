@@ -4,12 +4,13 @@ const HorizontalView = ({ sortedPages, baseUrl, addRemoveImg, isPreview }) => {
   if (!sortedPages?.length) return null;
 
   return (
-    <div className="flex flex-col gap-3 w-screen px-10">
+    <div className="flex flex-col gap-3  md:px-10">
       {/* Images Row */}
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
         {sortedPages.map((img, i) => (
           <div
             key={`${img + i}`}
+            onClick={() => addRemoveImg(img)}
             className={`min-w-[350px] object-contain rounded-md shadow ${img.includes("@") ? "opacity-20" : ""}  ${isPreview && img.includes("@") ? "hidden" : ""} `}
           >
             <img

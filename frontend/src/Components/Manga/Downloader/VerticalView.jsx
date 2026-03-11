@@ -5,12 +5,11 @@ const VerticalView = ({ sortedPages, baseUrl, addRemoveImg, isPreview }) => {
     <div className="flex flex-col items-center justify-center">
       {sortedPages.map((img, index) => (
         <div
+          key={`v${img + index}`}
+          onClick={() => addRemoveImg(img)}
           className={` ${img.includes("@") ? "opacity-20" : ""}  ${isPreview && img.includes("@") ? "hidden" : ""} `}
         >
-          <div
-            key={`v${img + index}`}
-            className="flex justify-center items-center gap-x-4 border px-2"
-          >
+          <div className="flex justify-center items-center gap-x-4 border px-2">
             <span className="text-sm opacity-70">Page: {index + 1}</span>
 
             <img
@@ -20,11 +19,7 @@ const VerticalView = ({ sortedPages, baseUrl, addRemoveImg, isPreview }) => {
               className="w-[70%] object-contain"
             />
             <hr />
-            <input
-              type="checkbox"
-              defaultChecked={!img.includes("@")}
-              onClick={() => addRemoveImg(img)}
-            />
+            <input type="checkbox" defaultChecked={!img.includes("@")} />
           </div>
         </div>
       ))}

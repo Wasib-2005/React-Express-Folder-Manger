@@ -12,9 +12,8 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").filter(Boolean) || [];
-
-console.log(allowedOrigins)
+const allowedOrigins =
+  process.env.ALLOWED_ORIGINS?.split(",").filter(Boolean) || [];
 
 app.use(
   cors({
@@ -28,8 +27,20 @@ app.use(
       }
     },
     credentials: true,
-  })
+  }),
 );
+
+app.use((req, res, next) => {
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  const method = req.method;
+  const url = req.originalUrl;
+  const userAgent = req.headers["user-agent"];
+  const time = new Date().toISOString();
+
+  console.log(`[${time}] ${ip} -> ${method} ${url} | ${userAgent}`);
+
+  next();
+});
 
 app.use(express.json());
 

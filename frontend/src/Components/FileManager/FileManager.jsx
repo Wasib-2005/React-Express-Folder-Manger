@@ -22,7 +22,7 @@ const FileManager = () => {
     <div className="-2">
       <ShowTheActivePath currentLocation={fileFolderPathData.location} />
       <FileManagerManu fileFolderPathData={fileFolderPathData} />
-      <hr className="glass" />
+      <hr className="glass" /> 
     </div>
   );
 };

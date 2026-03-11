@@ -1,12 +1,23 @@
 import fs from "fs/promises";
 import path from "path";
 import axios from "axios";
-import { chromium } from "playwright";
 
 import { broadcast } from "../../WebSockets/webSocket.js";
 import { progressCounter } from "../progressCounter.js";
 
 export const scrapeNamicomi = async (chapterUrl) => {
+  if (process.platform === "android") {
+    broadcast({
+      type: "message",
+      text: "Wont work for now",
+      running: true,
+      progress: progressCounter.counter,
+    });
+
+    return;
+  }
+  const { chromium } = await import("playwright");
+
   progressCounter.counter++;
 
   broadcast({

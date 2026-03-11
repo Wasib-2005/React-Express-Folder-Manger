@@ -10,7 +10,10 @@ const server = http.createServer(app);
 server.on("upgrade", (req, socket, head) => {
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit("connection", ws, req);
-  });
+  }); 
 });
+
+
+app.get("/test",(req,res)=>res.send("ok"))
 
 server.listen(3000, () => console.log("Server running on port 3000"));

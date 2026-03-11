@@ -1,0 +1,27 @@
+{
+  "name": "file-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "clear && echo 'Installing backend...' && npm install --prefix backend && echo 'Installing frontend...' && npm install --prefix frontend ",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
+    "frontend": "npm run dev --prefix frontend -- --host",
+    "backend": "npm run dev --prefix backend",
+    "playwright": "node Playwright/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wasib-2005/React-Express-Folder-Manger.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Wasib-2005/React-Express-Folder-Manger/issues"
+  },
+  "homepage": "https://github.com/Wasib-2005/React-Express-Folder-Manger#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

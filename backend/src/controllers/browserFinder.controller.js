@@ -68,7 +68,7 @@ export const foundImgs = async (req, res) => {
     progressCounter.counter++;
     broadcast({
       type: "finish",
-      text: `Found ${images.length} images (URLs only)`,
+      text: `Found ${images?.length || "0"} images `,
       running: false,
       progress: progressCounter.counter,
     });
