@@ -6,7 +6,6 @@ const VerticalView = ({ sortedPages, baseUrl, addRemoveImg, isPreview }) => {
       {sortedPages.map((img, index) => (
         <div
           key={`v${img + index}`}
-          onClick={() => addRemoveImg(img)}
           className={` ${img.includes("@") ? "opacity-20" : ""}  ${isPreview && img.includes("@") ? "hidden" : ""} `}
         >
           <div className="flex justify-center items-center gap-x-4 border px-2">
@@ -14,12 +13,17 @@ const VerticalView = ({ sortedPages, baseUrl, addRemoveImg, isPreview }) => {
 
             <img
               src={`${apiUrl}/api/file${baseUrl}/${img.replace("@", "")}`}
+              onClick={() => addRemoveImg(img)}
               alt={`Page ${index + 1}`}
               loading="lazy"
               className="w-[70%] object-contain"
             />
             <hr />
-            <input type="checkbox" defaultChecked={!img.includes("@")} />
+            <input
+              type="checkbox"
+              defaultChecked={!img.includes("@")}
+              onClick={() => addRemoveImg(img)}
+            />
           </div>
         </div>
       ))}

@@ -8,6 +8,9 @@ import { scrapeNamicomi } from "../utilities/mangaDownloader/scrapeNamicomi.js";
 import { scrapeSequentialImages } from "../utilities/mangaDownloader/scrapeSequentialImages.js";
 import { broadcast } from "../WebSockets/webSocket.js";
 import { progressCounter } from "../utilities/progressCounter.js";
+import { deleteFolder } from "../utilities/deleteFolder.js";
+import { safeFolderName } from "../utilities/safeFolderName.js";
+import { moveFile } from "../utilities/moveFiles.js";
 
 export const foundImgs = async (req, res) => {
   try {
@@ -68,7 +71,7 @@ export const foundImgs = async (req, res) => {
     progressCounter.counter++;
     broadcast({
       type: "finish",
-      text: `Found ${images?.length || "0"} images `,
+      text: `${images?.pages?.length ? "Done: " : "Error: "}Found ${images?.pages?.length || "0"} images `,
       running: false,
       progress: progressCounter.counter,
     });

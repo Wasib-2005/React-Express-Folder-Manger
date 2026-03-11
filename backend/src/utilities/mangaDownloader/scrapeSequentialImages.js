@@ -143,7 +143,7 @@ export const scrapeSequentialImages = async (imageUrl) => {
 
       broadcast({
         type: "message",
-        text: `Saved ${filename} (${i + 1}/${images.length})`,
+        text: `Found ${filename} (${i + 1}/${images.length})`,
         running: true,
         progress: progressCounter.counter,
       });
@@ -163,7 +163,7 @@ export const scrapeSequentialImages = async (imageUrl) => {
 
     broadcast({
       type: "message",
-      text: `Scraping finished → ${fileList.length} images saved`,
+      text: `${fileList?.length ? "" : "Error: "}Scraping finished → ${fileList.length} found image`,
       running: true,
       progress: progressCounter.counter,
     });

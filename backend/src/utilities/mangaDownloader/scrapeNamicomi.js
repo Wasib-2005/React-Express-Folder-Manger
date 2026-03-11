@@ -116,7 +116,7 @@ export const scrapeNamicomi = async (chapterUrl) => {
 
     broadcast({
       type: "message",
-      text: `Saved ${filename} (${i + 1}/${imageList.length})`,
+      text: `Found ${filename} (${i + 1}/${imageList.length})`,
       running: true,
       progress: progressCounter.counter,
     });
@@ -136,7 +136,7 @@ export const scrapeNamicomi = async (chapterUrl) => {
   broadcast({
     type: "message",
     running: true,
-    text: `Scraping finished → ${fileList.length} images saved`,
+    text: `${fileList?.length ? "" : "Error: "}Scraping finished → ${fileList.length} found image`,
     progress: progressCounter.counter,
   });
 

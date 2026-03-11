@@ -46,7 +46,7 @@ app.use(express.json());
 
 app.use("/api/paths", filepathRoutes);
 app.use("/api/file", express.static("/"));
-app.use("/api/findImg", browserFinderRoutes);
+app.use("/api/browser/find", browserFinderRoutes);
 
 // ✅ Frontend serving
 const frontendPath = path.join(__dirname, "../../frontend/dist");

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import VerticalView from "./VerticalView";
 import HorizontalView from "./HorizontalView";
-
+import { motion, AnimatePresence } from "framer-motion";
 const ViewDownloadedManga = ({ isPreview, imagesData, setImagesData }) => {
   const isHorizontal = imagesData?.isHorizontal ?? false;
 
@@ -43,7 +43,12 @@ const ViewDownloadedManga = ({ isPreview, imagesData, setImagesData }) => {
   if (!imagesData?.pages?.length) return null;
 
   return (
-    <div className="mt-6 flex flex-col gap-4 max-w-[calc(90vw)] mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="mt-6 flex flex-col gap-4 max-w-[calc(90vw)] mx-auto"
+    >
       {/* Metadata */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
@@ -76,10 +81,11 @@ const ViewDownloadedManga = ({ isPreview, imagesData, setImagesData }) => {
 
       {/* Toggle */}
       <label className="flex items-center gap-2 mt-4 cursor-pointer">
-        <input
+        <motion.input
           type="checkbox"
           checked={isHorizontal}
           onChange={toggleHorizontal}
+          whileTap={{ scale: 0.9 }}
           className="accent-blue-500"
         />
         Horizontal Reader
@@ -103,7 +109,7 @@ const ViewDownloadedManga = ({ isPreview, imagesData, setImagesData }) => {
           baseUrl={imagesData.baseUrl}
         />
       )}
-    </div>
+    </motion.div>
   );
 };
 
