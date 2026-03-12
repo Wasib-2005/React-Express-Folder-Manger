@@ -13,13 +13,14 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Allowed origins for CORS
 const allowedOrigins =
   process.env.ALLOWED_ORIGINS?.split(",").filter(Boolean) || [];
 
+// ─── Middleware ──────────────────────────────────────────────
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow requests with no origin like Postman or server-to-server
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -28,9 +29,10 @@ app.use(
       }
     },
     credentials: true,
-  }),
+  })
 );
 
+// Logging middleware
 app.use((req, res, next) => {
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   const method = req.method;
@@ -39,20 +41,30 @@ app.use((req, res, next) => {
   const time = new Date().toISOString();
 
   console.log(`[${time}] ${ip} -> ${method} ${url} | ${userAgent}`);
-
   next();
 });
 
 app.use(express.json());
 
+// ─── API Routes ─────────────────────────────────────────────
 app.use("/api/paths", filepathRoutes);
-app.use("/api/file", express.static("/"));
+app.use("/api/file", express.static("/")); // your file serving
 app.use("/api/browser/find", browserFinderRoutes);
 app.use("/api/manga", mangaListRoutes);
 
-// ✅ Frontend serving
-const frontendPath = path.join(__dirname, "../../frontend/dist");
-app.use(express.static(frontendPath));
+// Health check
 app.get("/health", (req, res) => res.json({ status: "ok" }));
+
+// ─── Frontend SPA ───────────────────────────────────────────
+// Path to your built frontend
+const frontendPath = path.join(__dirname, "../../frontend/dist");
+
+// Serve static files
+app.use(express.static(frontendPath));
+
+// SPA fallback: serve index.html for all non-API routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 export default app;
