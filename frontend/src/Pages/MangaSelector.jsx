@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import ListManga from "../Components/Manga/Reader/ListManga";
+import ListManga from "../Components/Manga/Selector/ListManga";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiBookOpen } from "react-icons/hi2";
 
