@@ -8,25 +8,24 @@ import { scrapeNamicomi } from "../utilities/mangaDownloader/scrapeNamicomi.js";
 import { scrapeSequentialImages } from "../utilities/mangaDownloader/scrapeSequentialImages.js";
 import { broadcast } from "../WebSockets/webSocket.js";
 import { progressCounter } from "../utilities/progressCounter.js";
-import { deleteFolder } from "../utilities/deleteFolder.js";
 import { safeFolderName } from "../utilities/safeFolderName.js";
 import { moveFile } from "../utilities/moveFiles.js";
+import { cancelFlag } from "../utilities/flages/cancelflag.js";
 
 export const foundManga = async (req, res) => {
-  try {
-    // Reset progress counter
-    progressCounter.counter = 0;
+  // Reset cancel flag at the start of every new scan
+  cancelFlag.cancelled = false;
+  progressCounter.counter = 0;
 
+  try {
     const { url } = req.body;
 
-    // Determine the download folder
     const defaultDir = path.resolve("./src/Storages/manga/temp");
     const tempDir = process.env.MANGA_MANHUA_DOWNLOAD_PATH
       ? path.resolve(process.env.MANGA_MANHUA_DOWNLOAD_PATH, "temp")
       : defaultDir;
     const basePath = tempDir;
 
-    // Step 1: Clear the download folder BEFORE doing anything else
     broadcast({
       type: "message",
       text: `Clearing download folder...`,
@@ -43,15 +42,12 @@ export const foundManga = async (req, res) => {
       running: true,
       progress: progressCounter.counter,
     });
-
-    // Step 2: Broadcast starting message
     broadcast({
       type: "message",
       text: "Starting manga scan...",
       progress: progressCounter.counter,
     });
 
-    // Step 3: Detect the site
     const site = detectSite(url);
     let images = [];
 
@@ -62,11 +58,23 @@ export const foundManga = async (req, res) => {
       progress: progressCounter.counter,
     });
 
-    // Step 4: Scrape images
+
     if (site === "mangadex") images = await scrapeMangadex(url);
     else if (site === "namicomi") images = await scrapeNamicomi(url);
-    else if (site === "nhentai") images = await scrapeNhentai(url);
+   
     else images = await scrapeSequentialImages(url);
+
+    // Check if cancelled after scraper returns
+    if (cancelFlag.cancelled) {
+      broadcast({
+        type: "finish",
+        text: "⚠ Scan cancelled",
+        running: false,
+        progress: progressCounter.counter,
+      });
+      return res.json({ success: false, cancelled: true });
+    }
+
     images.isHorizontal = false;
     progressCounter.counter++;
     broadcast({
@@ -75,14 +83,17 @@ export const foundManga = async (req, res) => {
       running: false,
       progress: progressCounter.counter,
     });
-    res.json({
-      success: true,
-      imagesData: {
-        ...images,
-        baseUrl: basePath,
-      },
-    });
+    res.json({ success: true, imagesData: { ...images, baseUrl: basePath } });
   } catch (err) {
+    if (err.message === "CANCELLED") {
+      broadcast({
+        type: "finish",
+        text: "⚠ Scan cancelled",
+        running: false,
+        progress: progressCounter.counter,
+      });
+      return res.json({ success: false, cancelled: true });
+    }
     console.error("Error in foundImgs:", err);
     progressCounter.counter++;
     broadcast({
@@ -90,9 +101,20 @@ export const foundManga = async (req, res) => {
       text: `Error: ${err.message}`,
       progress: progressCounter.counter,
     });
-
     res.status(500).json({ success: false, message: err.message });
   }
+};
+
+// ── Cancel endpoint ───────────────────────────────────────────────────────────
+export const cancelManga = (req, res) => {
+  cancelFlag.cancelled = true;
+  broadcast({
+    type: "finish",
+    text: "⚠ Scan cancelled",
+    running: false,
+    progress: progressCounter.counter,
+  });
+  res.json({ success: true });
 };
 
 export const saveManga = async (req, res) => {
@@ -150,16 +172,11 @@ export const saveManga = async (req, res) => {
       });
     }
 
-    // save metadata
     const jsonPath = path.join(episodeFolder, "info.json");
     await fs.writeFile(jsonPath, JSON.stringify(imagesData, null, 2));
 
-    // make a index here
-    // index file
     const indexPath = path.join(saveDir, "index.json");
-
     let index = [];
-
     try {
       const indexJson = await fs.readFile(indexPath, "utf8");
       index = JSON.parse(indexJson);
@@ -168,7 +185,6 @@ export const saveManga = async (req, res) => {
     }
 
     index.push(imagesData.baseUrl + "/info.json");
-
     await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
     progressCounter.counter++;
 
@@ -182,15 +198,12 @@ export const saveManga = async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error(error);
-
     progressCounter.counter++;
-
     broadcast({
       type: "message",
       text: `Error: ${error.message}`,
       progress: progressCounter.counter,
     });
-
     res.status(500).json({ success: false, message: error.message });
   }
 };
