@@ -1,4 +1,6 @@
 import axios from "axios";
+import { HiMagnifyingGlass, HiEye, HiEyeSlash } from "react-icons/hi2";
+import { HiOutlineArchiveBoxArrowDown } from "react-icons/hi2";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import ViewDownloadedManga from "../Components/Manga/Downloader/ViewDownloadedManga";
@@ -67,11 +69,14 @@ const MangaDownloader = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      setStartLooking(true);
-      setMessages(["Starting Looking for the item"]);
-      setImagesData({ pages: [] });
+    // Reset everything on every submit
+    setStartLooking(true);
+    setSaving(false);
+    setIsPreview(false);
+    setMessages(["Starting Looking for the item"]);
+    setImagesData({ pages: [] });
 
+    try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/browser/find/manga`,
         { url },
@@ -102,16 +107,37 @@ const MangaDownloader = () => {
         `Error: Failed – ${error.response?.data?.message || error.message}`,
       ]);
     } finally {
-      // rely on backend to finish the looking process via WebSocket
+      // Clear startLooking so buttons become active again
+      setStartLooking(false);
     }
   };
 
   // Handle manga save
+  // Handle manga save
   const handleSave = async () => {
     if (!imagesData.pages?.length) return;
 
+    // Reset state before saving
+    setSaving(true);
+    setStartLooking(false);
+    setIsPreview(false);
+
+    // REQUIRED FIELDS
+    if (
+      !imagesData.name ||
+      !imagesData.ep ||
+      !imagesData.source ||
+      !imagesData.titlePage
+    ) {
+      setMessages((prev) => [
+        ...prev,
+        "Error: Name, Chapter (ep), Source, and Title Page are required",
+      ]);
+      setSaving(false);
+      return;
+    }
+
     try {
-      setSaving(true);
       setMessages((prev) => [...prev, "Saving manga..."]);
 
       const res = await axios.post(
@@ -135,6 +161,7 @@ const MangaDownloader = () => {
       ]);
     } finally {
       setSaving(false);
+      setImagesData({ pages: [] }); // reset pages for next run
     }
   };
 
@@ -172,41 +199,42 @@ const MangaDownloader = () => {
           )}
         </AnimatePresence>
 
-        <div className="flex flex-wrap justify-center gap-2 mt-2">
-          <div className="flex flex-wrap gap-2 justify-center w-full sm:w-auto">
-            <button
-              disabled={startLooking || saving}
-              type="submit"
-              className={`btn btn-success w-40 sm:w-[140px] ${
-                startLooking ? "opacity-70 cursor-not-allowed" : ""
-              }`}
-            >
-              {startLooking ? "Looking..." : "Start Looking"}
-            </button>
+        <div className="">
+          <div className="flex flex-col items-center gap-3 mt-4">
+            {/* Primary actions */}
+            <div className="grid md:flex justify-center gap-3">
+              <button
+                disabled={startLooking || saving}
+                type="submit"
+                className={`btn btn-success w-44 flex items-center gap-2 ${
+                  startLooking ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+              >
+                <HiMagnifyingGlass size={18} />
+                {startLooking ? "Looking..." : "Start Looking"}
+              </button>
 
-            <button
-              disabled={startLooking || saving || !imagesData.pages?.length}
-              type="button"
-              onClick={() => setIsPreview(!isPreview)}
-              className="btn btn-primary w-40 sm:w-[140px]"
-            >
-              {startLooking
-                ? "Looking..."
-                : isPreview
-                  ? "Hide Preview"
-                  : "Preview"}
-            </button>
-          </div>
+              <button
+                disabled={startLooking || saving || !imagesData.pages?.length}
+                type="button"
+                onClick={() => setIsPreview(!isPreview)}
+                className="btn btn-primary w-44 flex items-center gap-2"
+              >
+                {isPreview ? <HiEyeSlash size={18} /> : <HiEye size={18} />}
+                {isPreview ? "Hide Preview" : "Preview"}
+              </button>
 
-          <div className="w-full flex justify-center mt-2 sm:mt-0">
-            <button
-              type="button"
-              className="btn btn-outline btn-info w-40 sm:w-[140px]"
-              onClick={handleSave}
-              disabled={startLooking || saving || !imagesData.pages?.length}
-            >
-              {saving ? "Saving..." : "Save The Manga"}
-            </button>
+              {/* Final action */}
+              <button
+                type="button"
+                className="btn btn-info w-44  flex items-center gap-2 justify-center"
+                onClick={handleSave}
+                disabled={startLooking || saving || !imagesData.pages?.length}
+              >
+                <HiOutlineArchiveBoxArrowDown size={18} />
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
         </div>
       </form>

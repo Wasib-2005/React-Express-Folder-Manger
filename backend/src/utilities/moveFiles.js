@@ -7,6 +7,7 @@ import path from "path";
  * @param {string} where - Destination folder or file path
  */
 export const moveFile = async (from, where) => {
+  console.log("Moving...")
   try {
     const fileName = path.basename(from);
     const destination = path.join(where, fileName);

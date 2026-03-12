@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import path from "path";
 import filepathRoutes from "./routes/filepath.routes.js";
 import browserFinderRoutes from "./routes/browserFinder.routes.js";
+import mangaListRoutes from "./routes/mangaList.routes.js";
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -47,6 +48,7 @@ app.use(express.json());
 app.use("/api/paths", filepathRoutes);
 app.use("/api/file", express.static("/"));
 app.use("/api/browser/find", browserFinderRoutes);
+app.use("/api/manga", mangaListRoutes);
 
 // ✅ Frontend serving
 const frontendPath = path.join(__dirname, "../../frontend/dist");

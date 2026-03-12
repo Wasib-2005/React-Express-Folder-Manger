@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import VerticalView from "./VerticalView";
 import HorizontalView from "./HorizontalView";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+
 const ViewDownloadedManga = ({ isPreview, imagesData, setImagesData }) => {
   const isHorizontal = imagesData?.isHorizontal ?? false;
 
@@ -77,9 +78,19 @@ const ViewDownloadedManga = ({ isPreview, imagesData, setImagesData }) => {
             className="border rounded px-2 py-1 w-full"
           />
         </div>
+
+        {/* New titlePage input */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+          <label className="font-semibold w-24">Title Page:</label>
+          <input
+            value={imagesData.titlePage || ""}
+            onChange={(e) => handleEdit("titlePage", e.target.value)}
+            className="border rounded px-2 py-1 w-full"
+          />
+        </div>
       </div>
 
-      {/* Toggle */}
+      {/* Toggle Horizontal */}
       <label className="flex items-center gap-2 mt-4 cursor-pointer">
         <motion.input
           type="checkbox"

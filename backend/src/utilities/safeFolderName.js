@@ -7,3 +7,4 @@ export const safeFolderName = (name) => {
     .replace(/\s+/g, "-") // spaces → hyphen
     .replace(/-+/g, "-"); // remove duplicate hyphens
 };
+

@@ -14,7 +14,3 @@ export const deleteFolder = async (folderPath) => {
     console.error(`Error deleting folder ${folderPath}:`, err.message);
   }
 };
-
-// Example usage:
-const folderToDelete = "/home/walla/download/new";
-deleteFolder(folderToDelete);

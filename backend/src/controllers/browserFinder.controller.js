@@ -67,7 +67,7 @@ export const foundImgs = async (req, res) => {
     else if (site === "namicomi") images = await scrapeNamicomi(url);
   
     else images = await scrapeSequentialImages(url);
-
+    images.isHorizontal = false;
     progressCounter.counter++;
     broadcast({
       type: "finish",

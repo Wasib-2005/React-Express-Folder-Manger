@@ -3,7 +3,7 @@ import path from "path";
 
 // Define extension categories
 const typeMap = {
-  video: [".mp4", ".mkv", ".avi", ".mov", ".webm","ts"],
+  video: [".mp4", ".mkv", ".avi", ".mov", ".webm", "ts"],
   audio: [".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"],
   photo: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".svg"],
   document: [".pdf", ".doc", ".docx", ".txt", ".xls", ".xlsx", ".ppt", ".pptx"],
@@ -36,6 +36,8 @@ function getType(itemName, isDirectory) {
 export async function scanFolderViaPath(folderPath) {
   const items = await fs.readdir(folderPath, { withFileTypes: true });
   const location = await fs.realpath(folderPath);
+
+  console.log("Scan path: " + folderPath);
 
   let folderFile = await Promise.all(
     items.map(async (item) => {

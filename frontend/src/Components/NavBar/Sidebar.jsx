@@ -4,6 +4,7 @@ import { RiMenu2Line } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
 const navLinks = [
   { name: "File Manager", to: "/" },
+  { name: "Manga Reader", to: "/manga-reader" },
   { name: "Manga Downloader", to: "/manga-downloader" },
   { name: "Video Player", to: "/video-player" },
 ];
