@@ -82,7 +82,6 @@ const getExtension = (fileName) => {
 const FileIcons = ({ fileFolderData }) => {
   if (fileFolderData?.type === "folder")
     return <MdFolder size={28} className="text-yellow-500" />;
-  console.log(fileFolderData);
   if (fileFolderData?.type === "photo")
     return (
       <img

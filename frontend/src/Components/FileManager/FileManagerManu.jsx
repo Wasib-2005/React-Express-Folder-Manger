@@ -1,63 +1,91 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { formatDate } from "../../Utilities/formatDate";
 import { autoFormatSize } from "../../Utilities/formatSize";
 import FileIcons from "../../Utilities/FileIcons";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import FileModal from "./FileModal";
 
 const FileManagerManu = ({ fileFolderPathData }) => {
   const navigate = useNavigate();
   const { folderFile, location } = fileFolderPathData;
 
-  const [currentPath, setCurrentPath] = useState(location);
+  const [currentPath, setCurrentPath] = useState(location || "/");
   const [displayFiles, setDisplayFiles] = useState(folderFile || []);
-
   const [filePathAndTypeNameIcon, setFilePathAndTypeNameIcon] = useState({});
-
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  useEffect(() => {
-    setDisplayFiles(folderFile || []);
-    setCurrentPath(location);
-  }, [folderFile, location]);
+  const [direction, setDirection] = useState("forward"); // forward = right to left
+  const prevPathRef = useRef(location || "/"); // always start with a string
 
-  // Animation variants for sliding folders
+  const [searchParams] = useSearchParams();
+  const queryPathRaw = searchParams.get("path") || location || "/";
+  const queryPath = decodeURIComponent(queryPathRaw); // decode %2F to /
+
+  useEffect(() => {
+    const prevPath = prevPathRef.current || "/"; // fallback if undefined
+
+    if (prevPath !== queryPath) {
+      const prevSegments = prevPath.split("/").filter(Boolean);
+      const currSegments = queryPath.split("/").filter(Boolean);
+
+      setDirection(
+        currSegments.length > prevSegments.length ? "forward" : "backward",
+      );
+      prevPathRef.current = queryPath; // update ref
+    }
+
+    setDisplayFiles(folderFile || []);
+    setCurrentPath(queryPath);
+  }, [folderFile, queryPath]);
+
   const slideVariants = {
-    initial: { x: "100%", opacity: 0 },
-    animate: { x: 0, opacity: 1, transition: { duration: 0.5 } },
-    exit: { x: "-100%", opacity: 0, transition: { duration: 0 } },
+    initial: (dir) => ({
+      x: dir === "forward" ? "100%" : "-120%",
+      opacity: 1,
+    }),
+    animate: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 250, // higher = faster spring
+        damping: 15, // higher = less bouncy
+      },
+    },
+    exit: (dir) => ({
+      x: dir === "forward" ? "-120%" : "100%",
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 250,
+        damping: 15,
+      },
+    }),
   };
 
   const handleFolderClick = (folderName) => {
     const newPath = `${currentPath}/${folderName}`;
-    setDisplayFiles([]); // trigger exit animation
-    setTimeout(() => {
-      navigate(`?path=${newPath}`);
-    }, 300); // match exit duration
+    navigate(`?path=${encodeURIComponent(newPath)}`); // encode for URL
   };
 
   const handleFileClick = (file, type) => {
     const newPath = `${currentPath}/${file.name}`;
-    setFilePathAndTypeNameIcon({ newPath, type, ...file});
+    setFilePathAndTypeNameIcon({ newPath, type, ...file });
     setIsModalOpen(true);
-
-    // window.open(
-    //   `${import.meta.env.VITE_API_URL}/api/file/${encodeURIComponent(newPath)}`,
-    //   "_blank",
-    // );
   };
 
   return (
     <div className="overflow-hidden">
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" custom={direction}>
         <motion.ul
-          key={currentPath} // key ensures AnimatePresence treats it as new content
+          key={currentPath}
           className="grid gap-1"
           variants={slideVariants}
           initial="initial"
           animate="animate"
           exit="exit"
+          custom={direction}
         >
           <hr />
           {displayFiles?.map((e, i) => (
