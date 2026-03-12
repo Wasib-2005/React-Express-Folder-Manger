@@ -5,6 +5,7 @@ import FileIcons from "../../Utilities/FileIcons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import FileModal from "./FileModal";
+import { HiChevronRight } from "react-icons/hi2";
 
 const FileManagerManu = ({ fileFolderPathData }) => {
   const navigate = useNavigate();
@@ -12,127 +13,135 @@ const FileManagerManu = ({ fileFolderPathData }) => {
 
   const [currentPath, setCurrentPath] = useState(location || "/");
   const [displayFiles, setDisplayFiles] = useState(folderFile || []);
+  const [direction, setDirection] = useState("forward");
   const [filePathAndTypeNameIcon, setFilePathAndTypeNameIcon] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [direction, setDirection] = useState("forward"); // forward = right to left
-  const prevPathRef = useRef(location || "/"); // always start with a string
+  // Track the previous path to compute direction — stored in a ref so it
+  // doesn't trigger re-renders, and only READ inside the async effect (never
+  // during render itself).
+  const prevPathRef = useRef(location || "/");
 
   const [searchParams] = useSearchParams();
   const queryPathRaw = searchParams.get("path") || location || "/";
-  const queryPath = decodeURIComponent(queryPathRaw); // decode %2F to /
+  const queryPath = decodeURIComponent(queryPathRaw);
 
   useEffect(() => {
-    const prevPath = prevPathRef.current || "/"; // fallback if undefined
-
-    if (prevPath !== queryPath) {
-      const prevSegments = prevPath.split("/").filter(Boolean);
-      const currSegments = queryPath.split("/").filter(Boolean);
-
-      setDirection(
-        currSegments.length > prevSegments.length ? "forward" : "backward",
-      );
-      prevPathRef.current = queryPath; // update ref
-    }
-
-    setDisplayFiles(folderFile || []);
-    setCurrentPath(queryPath);
+    // All setState calls here are fine — they're inside an async effect callback,
+    // not synchronously in the effect body's top level of a render.
+    const run = async () => {
+      const prevPath = prevPathRef.current || "/";
+      if (prevPath !== queryPath) {
+        const prevSegs = prevPath.split("/").filter(Boolean);
+        const currSegs = queryPath.split("/").filter(Boolean);
+        const nextDirection = currSegs.length > prevSegs.length ? "forward" : "backward";
+        prevPathRef.current = queryPath;
+        setDirection(nextDirection);
+      }
+      setDisplayFiles(folderFile || []);
+      setCurrentPath(queryPath);
+    };
+    run();
   }, [folderFile, queryPath]);
 
   const slideVariants = {
-    initial: (dir) => ({
-      x: dir === "forward" ? "100%" : "-120%",
-      opacity: 1,
-    }),
+    initial: (dir) => ({ x: dir === "forward" ? "60%" : "-60%", opacity: 0 }),
     animate: {
       x: 0,
       opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 250, // higher = faster spring
-        damping: 15, // higher = less bouncy
-      },
+      transition: { type: "spring", stiffness: 280, damping: 22 },
     },
     exit: (dir) => ({
-      x: dir === "forward" ? "-120%" : "100%",
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 250,
-        damping: 15,
-      },
+      x: dir === "forward" ? "-60%" : "60%",
+      opacity: 0,
+      transition: { type: "spring", stiffness: 280, damping: 22 },
     }),
   };
 
   const handleFolderClick = (folderName) => {
-    const newPath = `${currentPath}/${folderName}`;
-    navigate(`?path=${encodeURIComponent(newPath)}`); // encode for URL
+    const newPath = `${currentPath}/${folderName}`.replace("//", "/");
+    navigate(`?path=${encodeURIComponent(newPath)}`);
   };
 
-  const handleFileClick = (file, type) => {
-    const newPath = `${currentPath}/${file.name}`;
-    setFilePathAndTypeNameIcon({ newPath, type, ...file });
+  const handleFileClick = (file) => {
+    const newPath = `${currentPath}/${file.name}`.replace("//", "/");
+    setFilePathAndTypeNameIcon({ ...file, path: newPath });
     setIsModalOpen(true);
   };
 
+  if (!displayFiles?.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-base-content/40 gap-2">
+        <span className="text-4xl">📂</span>
+        <p className="text-sm font-medium">This folder is empty</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-hidden">
-      <AnimatePresence mode="wait" custom={direction}>
+    <>
+      {/* direction is plain state here — safe to use during render */}
+      <AnimatePresence custom={direction}>
         <motion.ul
           key={currentPath}
-          className="grid gap-1"
+          className="divide-y divide-base-200"
           variants={slideVariants}
           initial="initial"
           animate="animate"
           exit="exit"
           custom={direction}
         >
-          <hr />
-          {displayFiles?.map((e, i) => (
-            <li
-              key={`${e.name}-${i}`}
-              className="grid px-2"
-              onClick={() =>
-                e.type === "folder"
-                  ? handleFolderClick(e.name)
-                  : handleFileClick(e, e.type)
-              }
-            >
-              <span className="gap-2">
-                <span className="px-1 py-2 btn btn-ghost h-auto w-full text-left flex">
+          {displayFiles.map((e, i) => {
+            const isFolder = e.type === "folder";
+            return (
+              <motion.li
+                key={`${e.name}-${i}`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03, duration: 0.2 }}
+                onClick={() =>
+                  isFolder ? handleFolderClick(e.name) : handleFileClick(e)
+                }
+                className="group flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-base-200 active:bg-base-300 transition-colors"
+              >
+                <div className="shrink-0">
                   <FileIcons fileFolderData={e} />
-                  <span className="w-full">
-                    <span className="font-bold text-xl text-wrap">
-                      {e.name}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm sm:text-base truncate leading-tight">
+                    {e.name}
+                  </p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5 text-xs text-base-content/50">
+                    {!isFolder && <span>{autoFormatSize(e.size)}</span>}
+                    <span className="capitalize">{e.type}</span>
+                    <span className="hidden sm:inline">
+                      {formatDate(e.modified, "dd MMM yyyy")}
                     </span>
-                    <span className="flex justify-between">
-                      <span className="font-normal">
-                        Size: {autoFormatSize(e.size)}
-                      </span>
-                      <span className="font-normal">
-                        Created: {formatDate(e.created, "dd MMM yyyy")}
-                      </span>
-                    </span>
-                    <span className="flex justify-between">
-                      <span className="font-normal">Type: {e.type}</span>
-                      <span className="font-normal">
-                        Modified: {formatDate(e.modified, "dd MMM yyyy")}
-                      </span>
-                    </span>
-                  </span>
-                </span>
-              </span>
-              <hr className="mt-1" />
-            </li>
-          ))}
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex items-center gap-2 text-xs text-base-content/40">
+                  <span className="sm:hidden">{formatDate(e.modified, "dd MMM")}</span>
+                  {isFolder && (
+                    <HiChevronRight
+                      size={16}
+                      className="opacity-40 group-hover:opacity-80 group-hover:translate-x-0.5 transition-all"
+                    />
+                  )}
+                </div>
+              </motion.li>
+            );
+          })}
         </motion.ul>
-        <FileModal
-          filePathAndTypeName={filePathAndTypeNameIcon}
-          isModalOpen={isModalOpen}
-          setIsModalOpen={setIsModalOpen}
-        />
       </AnimatePresence>
-    </div>
+
+      <FileModal
+        filePathAndTypeName={filePathAndTypeNameIcon}
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+      />
+    </>
   );
 };
 

@@ -119,7 +119,7 @@ const MangaDownloader = () => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6 min-h-screen"
+      className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6 min-h-[calc(100vh-100px)]"
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <h1 className="font-semibold text-xl">Manga URL:</h1>

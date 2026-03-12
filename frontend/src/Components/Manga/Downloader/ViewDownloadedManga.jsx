@@ -181,7 +181,7 @@ const ViewDownloadedManga = ({
               {sortedPages.length} pages
             </span>
             {imagesData.name && (
-              <span className="badge badge-ghost truncate max-w-[140px] sm:max-w-none">
+              <span className="badge badge-ghost truncate max-w-35 sm:max-w-none">
                 {imagesData.name}
               </span>
             )}

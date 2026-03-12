@@ -135,7 +135,7 @@ file-manager/
 │   │   ├── Pages/
 │   │   │   ├── Home.jsx              # File manager page
 │   │   │   ├── MangaDownloader.jsx   # Download page
-│   │   │   └── MangaReader.jsx       # Reader page
+│   │   │   └── MangaSelector.jsx     # Selector page
 │   │   ├── Utilities/                # Helper utilities
 │   │   └── App.jsx                   # Main app component
 │   ├── package.json

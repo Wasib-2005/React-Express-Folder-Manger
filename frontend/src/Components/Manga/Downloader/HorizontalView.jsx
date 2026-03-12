@@ -18,7 +18,7 @@ const HorizontalView = ({ sortedPages, baseUrl, addRemoveImg, isPreview }) => {
               className={`
                 snap-start shrink-0 cursor-pointer rounded-lg overflow-hidden shadow
                 transition-opacity
-                w-[75vw] sm:w-[320px] md:w-[280px]
+                w-[75vw] sm:w-[320px] md:w-70
                 ${isRemoved ? "opacity-20" : "opacity-100"}
               `}
             >
