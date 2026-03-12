@@ -1,6 +1,5 @@
 import axios from "axios";
 import { HiMagnifyingGlass, HiEye, HiEyeSlash } from "react-icons/hi2";
-import { HiOutlineArchiveBoxArrowDown } from "react-icons/hi2";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import ViewDownloadedManga from "../Components/Manga/Downloader/ViewDownloadedManga";
@@ -16,60 +15,36 @@ const MangaDownloader = () => {
   const messageEndRef = useRef(null);
   const wsRef = useRef(null);
 
-  // WebSocket setup
   useEffect(() => {
     let apiUrl = import.meta.env.VITE_API_URL.replace(/^https?:\/\//, "");
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${protocol}://${apiUrl}`;
-
-    console.log("Connecting to WebSocket:", wsUrl);
-    const socket = new WebSocket(wsUrl);
+    const socket = new WebSocket(`${protocol}://${apiUrl}`);
     wsRef.current = socket;
 
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-
         if (data.type === "message" || data.type === "finish") {
-          setMessages((prev) => {
-            const newMessages = [...prev, data.text];
-            // limit to last 200 messages
-            return newMessages.slice(-200);
-          });
+          setMessages((prev) => [...prev, data.text].slice(-200));
         }
-
-        if (data.type === "finish") {
-          setStartLooking(false);
-        }
+        if (data.type === "finish") setStartLooking(false);
       } catch (err) {
         console.error("Invalid WebSocket message:", event.data, err);
       }
     };
 
-    socket.onerror = (err) => {
-      console.error("WebSocket error:", err);
+    socket.onerror = () =>
       setMessages((prev) => [...prev, "Error: WebSocket connection failed"]);
-    };
-
-    socket.onclose = () => {
-      console.log("WebSocket closed");
-    };
-
-    return () => {
-      socket.close();
-    };
+    socket.onclose = () => console.log("WebSocket closed");
+    return () => socket.close();
   }, []);
 
-  // auto scroll like console (instant scroll for performance)
   useEffect(() => {
     messageEndRef.current?.scrollIntoView();
   }, [messages]);
 
-  // Handle manga fetch
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Reset everything on every submit
     setStartLooking(true);
     setSaving(false);
     setIsPreview(false);
@@ -88,9 +63,7 @@ const MangaDownloader = () => {
           },
         },
       );
-
       const data = res.data;
-
       if (data.success && data.imagesData) {
         setImagesData(data.imagesData);
         setMessages((prev) => [
@@ -101,162 +74,142 @@ const MangaDownloader = () => {
         setMessages((prev) => [...prev, "Error: No images found"]);
       }
     } catch (error) {
-      console.error(error);
       setMessages((prev) => [
         ...prev,
         `Error: Failed – ${error.response?.data?.message || error.message}`,
       ]);
     } finally {
-      // Clear startLooking so buttons become active again
       setStartLooking(false);
     }
   };
 
-  // Handle manga save
-  // Handle manga save
-  const handleSave = async () => {
-    if (!imagesData.pages?.length) return;
-
-    // Reset state before saving
+  const handleSave = async (mergedData) => {
+    if (!mergedData.pages?.length) return;
     setSaving(true);
-    setStartLooking(false);
     setIsPreview(false);
-
-    // REQUIRED FIELDS
-    if (
-      !imagesData.name ||
-      !imagesData.ep ||
-      !imagesData.source ||
-      !imagesData.titlePage
-    ) {
-      setMessages((prev) => [
-        ...prev,
-        "Error: Name, Chapter (ep), Source, and Title Page are required",
-      ]);
-      setSaving(false);
-      return;
-    }
-
     try {
       setMessages((prev) => [...prev, "Saving manga..."]);
-
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/browser/find/save-manga`,
-        { imagesData },
+        { imagesData: mergedData },
       );
-
       if (res.data.success) {
         setMessages((prev) => [
           ...prev,
-          `Saved ${imagesData.pages.length} pages successfully`,
+          `Saved ${mergedData.pages.length} pages successfully`,
         ]);
       } else {
         setMessages((prev) => [...prev, "Error: Failed to save manga"]);
       }
     } catch (error) {
-      console.error(error);
       setMessages((prev) => [
         ...prev,
         `Error: Failed – ${error.response?.data?.message || error.message}`,
       ]);
     } finally {
       setSaving(false);
-      setImagesData({ pages: [] }); // reset pages for next run
+      setImagesData({ pages: [] });
     }
   };
+
+  const hasPages = !!imagesData.pages?.length;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="px-2 grid gap-4 mt-1 md:w-[90%] min-h-[calc(100vh-300px)] md:min-h-[calc(100vh-75px)] m-auto justify-center items-center"
+      className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6 min-h-screen"
     >
-      <form className="grid gap-4" onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <h1 className="font-semibold text-xl">Manga URL:</h1>
 
-        <input
-          type="text"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="p-2 rounded-lg border border-base-300 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
+        {/* URL + Search row — stacks on mobile */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://..."
+            className="input input-bordered w-full focus:outline-none focus:ring-2 focus:ring-blue-400 "
+          />
+          <button
+            disabled={startLooking || saving}
+            type="submit"
+            className="btn btn-success gap-2 w-full sm:w-auto shrink-0"
+          >
+            <HiMagnifyingGlass size={18} />
+            {startLooking ? "Looking..." : "Start Looking"}
+          </button>
+        </div>
 
+        {/* Preview toggle — only visible when pages are loaded */}
         <AnimatePresence>
-          {imagesData.pages?.length > 0 && (
+          {hasPages && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
             >
-              <ViewDownloadedManga
-                isPreview={isPreview}
-                imagesData={imagesData}
-                setImagesData={setImagesData}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="">
-          <div className="flex flex-col items-center gap-3 mt-4">
-            {/* Primary actions */}
-            <div className="grid md:flex justify-center gap-3">
               <button
                 disabled={startLooking || saving}
-                type="submit"
-                className={`btn btn-success w-44 flex items-center gap-2 ${
-                  startLooking ? "opacity-70 cursor-not-allowed" : ""
-                }`}
-              >
-                <HiMagnifyingGlass size={18} />
-                {startLooking ? "Looking..." : "Start Looking"}
-              </button>
-
-              <button
-                disabled={startLooking || saving || !imagesData.pages?.length}
                 type="button"
-                onClick={() => setIsPreview(!isPreview)}
-                className="btn btn-primary w-44 flex items-center gap-2"
+                onClick={() => setIsPreview((p) => !p)}
+                className="btn btn-primary gap-2 w-full sm:w-auto"
               >
                 {isPreview ? <HiEyeSlash size={18} /> : <HiEye size={18} />}
                 {isPreview ? "Hide Preview" : "Preview"}
               </button>
-
-              {/* Final action */}
-              <button
-                type="button"
-                className="btn btn-info w-44  flex items-center gap-2 justify-center"
-                onClick={handleSave}
-                disabled={startLooking || saving || !imagesData.pages?.length}
-              >
-                <HiOutlineArchiveBoxArrowDown size={18} />
-                {saving ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </form>
 
-      {/* Console Messages */}
-      {messages.length > 0 && (
-        <div className="p-2 glass font-semibold font-mono rounded max-h-64 overflow-y-auto z-0 mt-4 mb-10">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={
-                msg.toLowerCase().includes("error")
-                  ? "text-red-600"
-                  : "text-green-600"
-              }
-            >
-              {msg}
-            </div>
-          ))}
-          <div ref={messageEndRef} />
-        </div>
-      )}
+      {/* Viewer */}
+      <AnimatePresence>
+        {hasPages && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <ViewDownloadedManga
+              isPreview={isPreview}
+              imagesData={imagesData}
+              setImagesData={setImagesData}
+              onSaveConfirm={handleSave}
+              saving={saving}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Console log */}
+      <AnimatePresence>
+        {messages.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="p-3 glass font-mono text-sm font-semibold rounded-lg max-h-52 overflow-y-auto mb-6"
+          >
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={
+                  msg.toLowerCase().includes("error")
+                    ? "text-red-500"
+                    : "text-green-500"
+                }
+              >
+                {msg}
+              </div>
+            ))}
+            <div ref={messageEndRef} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
