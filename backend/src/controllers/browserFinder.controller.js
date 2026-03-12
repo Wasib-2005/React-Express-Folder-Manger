@@ -12,7 +12,7 @@ import { deleteFolder } from "../utilities/deleteFolder.js";
 import { safeFolderName } from "../utilities/safeFolderName.js";
 import { moveFile } from "../utilities/moveFiles.js";
 
-export const foundImgs = async (req, res) => {
+export const foundManga = async (req, res) => {
   try {
     // Reset progress counter
     progressCounter.counter = 0;
@@ -65,7 +65,7 @@ export const foundImgs = async (req, res) => {
     // Step 4: Scrape images
     if (site === "mangadex") images = await scrapeMangadex(url);
     else if (site === "namicomi") images = await scrapeNamicomi(url);
-  
+    else if (site === "nhentai") images = await scrapeNhentai(url);
     else images = await scrapeSequentialImages(url);
     images.isHorizontal = false;
     progressCounter.counter++;
@@ -92,5 +92,105 @@ export const foundImgs = async (req, res) => {
     });
 
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const saveManga = async (req, res) => {
+  console.log("saving...");
+
+  try {
+    progressCounter.counter = 0;
+
+    const { imagesData } = req.body;
+    console.log(imagesData);
+
+    const defaultDir = path.resolve("./src/Storages/manga/save");
+    const saveDir = process.env.MANGA_MANHUA_DOWNLOAD_PATH
+      ? path.resolve(process.env.MANGA_MANHUA_DOWNLOAD_PATH, "save")
+      : defaultDir;
+
+    const baseUrl = saveDir;
+    const tempUrl = imagesData.baseUrl;
+
+    const titleFolderName = safeFolderName(imagesData?.name);
+    const ep = imagesData.ep;
+    const tempPageList = imagesData.pages;
+
+    const episodeFolder = `${baseUrl}/${titleFolderName}/ep${ep}`;
+
+    progressCounter.counter++;
+    broadcast({
+      type: "message",
+      text: "Preparing save folder...",
+      progress: progressCounter.counter,
+    });
+
+    imagesData.baseUrl = `${baseUrl}/${titleFolderName}/ep${ep}`;
+
+    await fs.mkdir(episodeFolder, { recursive: true });
+
+    progressCounter.counter++;
+    broadcast({
+      type: "message",
+      text: `Saving ${tempPageList.length} pages...`,
+      progress: progressCounter.counter,
+    });
+
+    for (let index = 0; index < tempPageList.length; index++) {
+      const element = tempPageList[index];
+      if (element.includes("@")) continue;
+
+      await moveFile(`${tempUrl}/${element}`, episodeFolder);
+
+      progressCounter.counter++;
+      broadcast({
+        type: "message",
+        text: `Saved page ${index + 1}/${tempPageList.length}`,
+        progress: progressCounter.counter,
+      });
+    }
+
+    // save metadata
+    const jsonPath = path.join(episodeFolder, "info.json");
+    await fs.writeFile(jsonPath, JSON.stringify(imagesData, null, 2));
+
+    // make a index here
+    // index file
+    const indexPath = path.join(saveDir, "index.json");
+
+    let index = [];
+
+    try {
+      const indexJson = await fs.readFile(indexPath, "utf8");
+      index = JSON.parse(indexJson);
+    } catch {
+      index = [];
+    }
+
+    index.push(imagesData.baseUrl + "/info.json");
+
+    await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
+    progressCounter.counter++;
+
+    broadcast({
+      type: "finish",
+      text: `Done: Saved ${tempPageList.length} pages`,
+      running: false,
+      progress: progressCounter.counter,
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+
+    progressCounter.counter++;
+
+    broadcast({
+      type: "message",
+      text: `Error: ${error.message}`,
+      progress: progressCounter.counter,
+    });
+
+    res.status(500).json({ success: false, message: error.message });
   }
 };
